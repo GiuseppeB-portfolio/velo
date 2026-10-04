@@ -61,6 +61,22 @@ Su macOS e Linux l'attivazione dell'ambiente è `source .venv/bin/activate`; il 
 | `--port NUMERO` | usa un'altra porta (default 8765) |
 | `--no-browser` | non apre il browser |
 
+### Dalla volta successiva
+
+L'installazione si fa una volta sola. Per riavviare il programma basta riattivare l'ambiente virtuale e lanciare `velo`, dalla cartella in cui hai clonato il progetto:
+
+```powershell
+cd velo
+.\.venv\Scripts\Activate.ps1
+velo
+```
+
+Su macOS e Linux la seconda riga è `source .venv/bin/activate`. Se all'inizio della riga di comando vedi già `(.venv)`, l'ambiente è attivo e puoi saltarla. Si chiude con `Ctrl+C`; se la porta risulta occupata da un avvio precedente, chiudi quella finestra oppure usa `velo --port 8766`.
+
+Se non vuoi attivare l'ambiente ogni volta, puoi lanciare il comando direttamente: `.\.venv\Scripts\velo.exe` su Windows, `.venv/bin/velo` altrove.
+
+**Per aggiornare** a una versione più recente: `git pull` e poi di nuovo `pip install .` (con l'ambiente attivo). Il passo `pip install .` serve perché l'installazione normale copia il programma nell'ambiente virtuale. Se invece hai installato in modalità sviluppo (`pip install -e ".[dev]"`), il codice viene letto direttamente dalla cartella del progetto e dopo un `git pull` non serve reinstallare, a meno che siano cambiate le dipendenze in `pyproject.toml`.
+
 Funziona anche come `python -m velo`. Il nome del pacchetto per `pip` è `velo-pseudonymizer`, perché `velo` su PyPI è occupato da un progetto non correlato; il comando e il modulo Python si chiamano `velo`.
 
 **Un consiglio pratico.** Il browser salva i file scaricati nella cartella Download, che su molti computer è sincronizzata con un servizio cloud (OneDrive, iCloud, Dropbox). Il dizionario di ripristino contiene i dati originali: salvalo in una cartella non sincronizzata.
