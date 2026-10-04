@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}velo, file pseudonimizzato{% endblock %}
+{% block main %}
+<h1>File pseudonimizzato</h1>
+<p class="lead">{{ sess.filename }} è stato copiato in un nuovo file con i campi scelti sostituiti. L'originale non è stato toccato.</p>
+
+<table class="counts">
+  <thead><tr><th scope="col">Campo</th><th scope="col">Sostituzioni</th></tr></thead>
+  <tbody>
+  {% for fid, n in r.report.replaced.items() %}
+    <tr><th scope="row">{{ fid }}</th><td>{{ n }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if sess.confirmed %}
+<div class="notice caution">
+  <h2>Hai confermato valori fuori tipo</h2>
+  <ul>{% for m in sess.confirmed %}<li>{{ m }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{% if r.warnings %}
+<div class="notice">
+  <h2>Da controllare</h2>
+  <ul>{% for w in r.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="downloads">
+  <a class="button" href="{{ url_for('download', sid=sess.sid, kind='output') }}">Scarica {{ r.output.name }}</a>
+  <div class="notice caution">
+    <h2>Il dizionario contiene i dati originali</h2>
+    <p>Serve per tornare indietro, ma chi ha il dizionario e il file pseudonimizzato ricostruisce tutto. Non condividerlo, non caricarlo su servizi esterni o su un'AI, non spedirlo insieme al file.</p>
+    <a class="button secondary" href="{{ url_for('download', sid=sess.sid, kind='mapping') }}">Scarica {{ r.mapping.name }}</a>
+  </div>
+</div>
+
+<p class="hint">Chiave usata: {% if r.key_mode == 'project' %}salvata su questo computer{% else %}solo per questo file{% endif %} (identificativo {{ r.key_id }}).</p>
+
+<div class="after">
+  <a href="{{ url_for('fields', sid=sess.sid) }}">Cambia la scelta dei campi</a>
+  <form method="post" action="{{ url_for('delete', sid=sess.sid) }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit" class="link">Elimina questi file dal computer</button>
+  </form>
+</div>
+{% endblock %}

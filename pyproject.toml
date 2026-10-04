@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "velo-pseudonymizer"  # "velo" is taken on PyPI by an unrelated project; the command and the package stay "velo"
+version = "0.1.0.dev0"
+description = "Pseudonimizzazione locale di file Excel, CSV e JSON, con scelta dei campi in mano all'utente."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Giuseppe Bianco" }]
+keywords = ["pseudonymization", "privacy", "gdpr", "excel", "csv", "json", "faker"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Natural Language :: Italian",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "faker>=40",  # i valori finti stabili tra file dipendono dalla versione: è salvata nel dizionario
+    "openpyxl",
+    "flask",
+]
+
+[project.urls]
+Homepage = "https://github.com/GiuseppeB-portfolio/velo"
+Repository = "https://github.com/GiuseppeB-portfolio/velo"
+Issues = "https://github.com/GiuseppeB-portfolio/velo/issues"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "hypothesis", "ruff"]
+
+[project.scripts]
+velo = "velo.web.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"velo.web" = ["templates/*.html", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501", "SIM108", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E731", "E741", "B011", "SIM117"]
+
+[tool.coverage.run]
+branch = true
+source = ["velo"]
+omit = ["*/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 92
+show_missing = true
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]

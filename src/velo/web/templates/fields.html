@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}velo, scegli i campi{% endblock %}
+{% block main %}
+<h1>{{ sess.filename }}</h1>
+<p class="lead">{{ sess.fields|length }} campi trovati. Spunta quelli da sostituire e indica che tipo di dato contengono. Le anteprime dei campi scelti si sfocano; passa il mouse per rivederle.</p>
+
+{% if errors %}
+<div class="notice problem" role="alert">
+  <h2>Controlla la scelta</h2>
+  <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{% if mismatches %}
+<div class="notice caution" role="alert">
+  <h2>Alcuni valori non corrispondono al tipo scelto</h2>
+  <p>Succede, per esempio, con le righe dei totali o con le etichette dentro una colonna di dati. Se prosegui, verranno sostituiti comunque; altrimenti correggi la scelta qui sotto.</p>
+  <ul>{% for m in mismatches %}<li>{{ m }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{% if sess.warnings %}
+<div class="notice">
+  <h2>Da sapere prima di procedere</h2>
+  <ul>{% for w in sess.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('run', sid=sess.sid) }}" id="pick">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+
+  <div class="toolbar">
+    <label class="filter">Cerca un campo <input type="search" id="filter" autocomplete="off"></label>
+    <p class="count"><span id="count">0</span> campi scelti</p>
+  </div>
+
+  <ul class="fields">
+  {% for f in sess.fields %}
+    {% set i = loop.index0 %}
+    <li class="field" data-name="{{ (f.container ~ ' ' ~ f.label)|lower }}">
+      <div class="pick">
+        <input class="sel" type="checkbox" id="sel{{ i }}" name="sel_{{ i }}" {% if form.get('sel_' ~ i) %}checked{% endif %}>
+        <label for="sel{{ i }}">
+          <span class="name">{{ f.label }}</span>
+          {% if f.container %}<span class="where">foglio {{ f.container }}</span>{% endif %}
+        </label>
+      </div>
+      <p class="samples">
+        {% if f.sample %}{% for s in f.sample %}<span>{{ s }}</span>{% endfor %}
+        {% else %}<em>nessun valore</em>{% endif %}
+      </p>
+      {% if f.formula_cells %}<p class="hint">{{ f.formula_cells }} celle con formule non vengono toccate.</p>{% endif %}
+      <div class="how">
+        <select name="cat_{{ i }}" aria-label="Tipo di dato di {{ f.label }}">
+          <option value="">Scegli il tipo</option>
+          {% for value, label in categories %}
+          <option value="{{ value }}" {% if form.get('cat_' ~ i) == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="mode_{{ i }}" aria-label="Come sostituire {{ f.label }}">
+          <option value="fake" {% if form.get('mode_' ~ i) != 'placeholder' %}selected{% endif %}>Valore finto realistico</option>
+          <option value="placeholder" {% if form.get('mode_' ~ i) == 'placeholder' %}selected{% endif %}>Segnaposto, per esempio [FULLNAME_K7Q2M]</option>
+        </select>
+      </div>
+    </li>
+  {% endfor %}
+  </ul>
+
+  <fieldset class="options">
+    <legend>Opzioni</legend>
+    <div class="opt">
+      <p class="optname">Chiave per generare i valori finti</p>
+      <label><input type="radio" name="key" value="ephemeral" {% if form.get('key') != 'project' %}checked{% endif %}> Solo per questo file</label>
+      <p class="hint">Consigliata. Coerente dentro il file; due file elaborati separatamente non sono collegabili tra loro.</p>
+      <label><input type="radio" name="key" value="project" {% if form.get('key') == 'project' %}checked{% endif %}> Salvata su questo computer</label>
+      <p class="hint">La stessa persona ha lo stesso nome finto in tutti i file, quindi chi riceve più file può incrociarli. La chiave resta in <code>{{ key_dir }}</code> ed è sensibile quanto il dizionario.</p>
+    </div>
+    {% if is_xlsx %}
+    <div class="opt">
+      <label><input type="checkbox" name="scrub" {% if not form or form.get('scrub') %}checked{% endif %}> Rimuovi autore e titolo dalle proprietà del file</label>
+    </div>
+    {% endif %}
+    {% if is_csv %}
+    <div class="opt">
+      <label>Codifica del file di uscita
+        <select name="encoding">
+          <option value="original">Come l'originale</option>
+          <option value="utf-8" {% if form.get('encoding') == 'utf-8' %}selected{% endif %}>UTF-8</option>
+        </select>
+      </label>
+    </div>
+    {% endif %}
+  </fieldset>
+
+  {% if confirm %}
+  <button type="submit" id="go" name="confirmed" value="{{ confirm }}">Sostituisci comunque</button>
+  {% else %}
+  <button type="submit" id="go">Sostituisci i campi scelti</button>
+  {% endif %}
+</form>
+{% endblock %}

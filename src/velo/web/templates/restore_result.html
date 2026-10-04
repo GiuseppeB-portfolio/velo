@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}velo, file ripristinato{% endblock %}
+{% block main %}
+<h1>File ripristinato</h1>
+<p class="lead">Il file contiene di nuovo i dati originali: trattalo come tale.</p>
+<table class="counts">
+  <thead><tr><th scope="col">Campo</th><th scope="col">Valori ripristinati</th></tr></thead>
+  <tbody>{% for fid, n in r.restored.items() %}<tr><th scope="row">{{ fid }}</th><td>{{ n }}</td></tr>{% endfor %}</tbody>
+</table>
+{% if r.identical_to_original is true %}
+<p class="ok">Il file ripristinato è identico all'originale, byte per byte.</p>
+{% elif r.identical_to_original is false %}
+<p class="hint">Il file ripristinato non è identico byte per byte all'originale. Con Excel è normale: il file viene riscritto e perde, per esempio, autore e titolo. Con CSV e JSON indica che qualcosa nel file pseudonimizzato è stato modificato.</p>
+{% endif %}
+{% if r.warnings %}
+<div class="notice"><h2>Da controllare</h2><ul>{% for w in r.warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
+{% endif %}
+<div class="downloads">
+  <a class="button" href="{{ url_for('download', sid=sess.sid, kind='restored') }}">Scarica {{ r.output.name }}</a>
+</div>
+<div class="after">
+  <form method="post" action="{{ url_for('delete', sid=sess.sid) }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit" class="link">Elimina questi file dal computer</button>
+  </form>
+</div>
+{% endblock %}

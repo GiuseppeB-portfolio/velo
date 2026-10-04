@@ -1,0 +1,4 @@
+# Same line endings on every system, so that Windows and Linux builds see identical files.
+* text=auto eol=lf
+*.xlsx binary
+*.png binary

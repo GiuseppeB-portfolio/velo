@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}velo, pseudonimizza un file{% endblock %}
+{% block main %}
+<h1>Sostituisci i dati personali prima di condividere un file</h1>
+<p class="lead">Apri un file Excel, CSV o JSON. Vedrai i campi, sceglierai quali sostituire e con che cosa. I campi che non scegli restano com'erano.</p>
+
+<form class="upload" method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="file">File da pseudonimizzare</label>
+  <input id="file" name="file" type="file" accept=".xlsx,.csv,.json" required>
+  <button type="submit">Apri il file</button>
+</form>
+
+<section class="plain">
+  <h2>Cosa fa e cosa non fa</h2>
+  <p>Sostituisce solo i campi che scegli tu: non cerca dati sensibili da solo. I valori finti sono coerenti, quindi la stessa persona diventa sempre lo stesso nome finto nel file.</p>
+  <p>Insieme al file ti consegna un dizionario per tornare ai dati originali. Per questo il risultato è una pseudonimizzazione: il dizionario è sensibile quanto l'originale e va custodito allo stesso modo.</p>
+  <p>I dati personali scritti nei campi di testo libero che non scegli restano in chiaro.</p>
+</section>
+{% endblock %}

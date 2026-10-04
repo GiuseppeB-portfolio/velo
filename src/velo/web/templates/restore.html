@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}velo, ripristina un file{% endblock %}
+{% block main %}
+<h1>Torna ai dati originali</h1>
+<p class="lead">Servono il file pseudonimizzato e il suo dizionario, quello che finisce in <code>.velo-map.json</code>.</p>
+<form class="upload" method="post" action="{{ url_for('restore_page') }}" enctype="multipart/form-data">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="pseudonymized">File pseudonimizzato</label>
+  <input id="pseudonymized" name="pseudonymized" type="file" accept=".xlsx,.csv,.json" required>
+  <label for="mapping">Dizionario di ripristino</label>
+  <input id="mapping" name="mapping" type="file" accept=".json" required>
+  <button type="submit">Ripristina</button>
+</form>
+{% endblock %}
