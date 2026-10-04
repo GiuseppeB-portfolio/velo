@@ -4,7 +4,7 @@ import re
 import openpyxl
 import pytest
 
-from factories import CSV_IT, make_workbook
+from factories import CSV_IT, assert_cells_changed, csv_rows, make_workbook
 from velo.web.app import CATEGORIES, create_app, parse_args
 
 BASE = "http://127.0.0.1:5000"
@@ -181,7 +181,7 @@ def test_full_csv_flow_pseudonymize_download_restore(client, app):
     out = client.get(f"/s/{sid}/download/output", base_url=BASE)
     assert "attachment" in out.headers["Content-Disposition"]
     body = out.data.decode("cp1252")
-    assert "Mario" not in body and "Rossi" not in body and "Forlì" not in body
+    assert_cells_changed(csv_rows(CSV), csv_rows(out.data), columns=(0, 1, 3))
     assert "[CITY_" in body and "1.234,56" in body  # placeholders honoured, unchosen column intact
 
     mp = client.get(f"/s/{sid}/download/mapping", base_url=BASE)
@@ -208,8 +208,12 @@ def test_rerunning_with_other_choices_replaces_previous_output(client, app):
     sid = sid_of(upload(client, app, CSV, "c.csv"))
     run(client, app, sid, {"sel_0": "on", "cat_0": "first_name"})
     run(client, app, sid, {"sel_1": "on", "cat_1": "last_name"})
-    body = client.get(f"/s/{sid}/download/output", base_url=BASE).data.decode("cp1252")
-    assert "Mario" in body and "Rossi" not in body
+    rows = csv_rows(client.get(f"/s/{sid}/download/output", base_url=BASE).data)
+    original = csv_rows(CSV)
+    assert [r[0] for r in rows] == [
+        r[0] for r in original
+    ]  # first names intact: the second run starts again from the original file
+    assert_cells_changed(original, rows, columns=(1,))  # surnames: only the second run applies
 
 
 def test_project_key_option_and_utf8_option(client, app, tmp_path, monkeypatch):
@@ -247,7 +251,9 @@ def test_json_flow(client, app):
     assert "clienti[].nome" in html and "clienti[].importo" in html
     run(client, app, sid, {"sel_0": "on", "cat_0": "fullname"})
     out = client.get(f"/s/{sid}/download/output", base_url=BASE).data
-    assert b"Mario" not in out and b'"importo":1.10' in out
+    import json as _json
+
+    assert _json.loads(out)["clienti"][0]["nome"] != "Mario Rossi" and b'"importo":1.10' in out
 
 
 # -- restore errors and cleanup ----------------------------------------------------------------------
@@ -428,8 +434,9 @@ def test_file_without_fields_is_refused_and_cleaned_up(client, app):
 def test_invalid_mode_value_falls_back_to_fake(client, app):
     sid = sid_of(upload(client, app, CSV, "c.csv"))
     run(client, app, sid, {"sel_0": "on", "cat_0": "first_name", "mode_0": "bogus"})
-    body = client.get(f"/s/{sid}/download/output", base_url=BASE).data.decode("cp1252")
-    assert "[FIRST_NAME_" not in body and "Mario" not in body
+    data = client.get(f"/s/{sid}/download/output", base_url=BASE).data
+    assert b"[FIRST_NAME_" not in data
+    assert_cells_changed(csv_rows(CSV), csv_rows(data), columns=(0,))
 
 
 def test_service_errors_are_shown_on_the_form_with_choices_kept(client, app, monkeypatch):

@@ -54,6 +54,10 @@ velo
 
 Su macOS e Linux l'attivazione dell'ambiente è `source .venv/bin/activate`; il resto è uguale.
 
+**Controlla che l'ambiente sia attivo.** Dopo l'attivazione la riga di comando inizia con `(.venv)`. Se non c'è, `pip install .` installa nell'ambiente globale di Python e `velo` non viene trovato. Puoi verificarlo con `pip -V`: il percorso mostrato deve contenere `.venv`. L'attivazione `.\.venv\Scripts\Activate.ps1` funziona solo in PowerShell: se usi il Prompt dei comandi (`cmd`), il comando è `.venv\Scripts\activate.bat`.
+
+Se dopo l'installazione `velo` risulta «non riconosciuto», quasi sempre l'ambiente non era attivo durante `pip install .`: attivalo e ripeti `pip install .`.
+
 `velo` avvia il server e apre il browser su `http://127.0.0.1:8765`. Si chiude con `Ctrl+C`.
 
 | Opzione | Effetto |
@@ -161,6 +165,7 @@ Esiste un dizionario che permette di tornare ai dati originali, quindi il risult
 ### Qualità dei valori finti
 
 - **Il serbatoio di Faker è piccolo.** Con Faker 40 i nomi propri distinti sono circa 458, i cognomi circa 1.164 e i comuni circa 16.100. Quando i valori distinti superano il serbatoio, i finti ricevono un numero finale («Rossi 2») e l'app lo segnala. In un file di prova con 4.000 nomi distinti è successo per la grande maggioranza.
+- **Un valore finto può coincidere con un valore vero di un'altra riga.** I nomi finti vengono estratti dallo stesso elenco di Faker da cui provengono molti nomi reali: se nel file c'è un «Mario», il finto di un'altra persona può essere «Mario». Non è una fuga di dati e il ripristino funziona lo stesso, ma chi legge l'output non può dedurre che un nome sia vero perché compare anche nell'originale.
 - **I finti sono internamente incoerenti.** Il codice fiscale non corrisponde a nome e data di nascita; chi conosce la sua struttura capisce che è finto.
 - **Possibili coincidenze con dati reali.** Un telefono, un IBAN o un'email finti potrebbero esistere davvero. Le email usano domini riservati, quindi non possono arrivare a nessuno; per telefoni e IBAN non c'è questa garanzia.
 - **La stabilità tra file ha delle eccezioni.** Con la chiave salvata, lo stesso valore dà lo stesso finto in file diversi, tranne i valori coinvolti in collisioni, la cui sorte dipende dall'ordine di arrivo. Dipende anche dalla versione di Faker: aggiornarla può cambiare i valori generati (la versione è salvata nel dizionario).

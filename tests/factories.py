@@ -10,6 +10,26 @@ from openpyxl.styles import Font
 from openpyxl.worksheet.datavalidation import DataValidation
 
 
+def csv_rows(raw: bytes, encoding: str = "cp1252", delimiter: str = ";") -> list[list[str]]:
+    import csv
+    import io
+
+    return list(csv.reader(io.StringIO(raw.decode(encoding), newline=""), delimiter=delimiter))
+
+
+def assert_cells_changed(original: list[list[str]], output: list[list[str]], columns) -> None:
+    """Every non-empty chosen cell must differ from the original, compared by position.
+
+    Never search for the real string inside the output: a fake value can legitimately
+    contain it ('Mario' inside 'Mariotti') or equal another person's real value.
+    """
+    assert len(original) == len(output)
+    for row_in, row_out in zip(original[1:], output[1:], strict=True):
+        for col in columns:
+            if row_in[col]:
+                assert row_out[col] != row_in[col], (col, row_in[col])
+
+
 def identity(choice, value):
     return value
 

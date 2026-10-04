@@ -6,7 +6,7 @@ from datetime import datetime
 import openpyxl
 import pytest
 
-from factories import CSV_IT, make_workbook, write_csv
+from factories import CSV_IT, assert_cells_changed, csv_rows, make_workbook, write_csv
 from velo.errors import PlanError, VeloError
 from velo.keystore import default_dir, ephemeral_key, key_id, load_or_create_project_key
 from velo.mapping import MappingFile
@@ -35,8 +35,7 @@ def test_csv_roundtrip_restores_the_original_bytes(tmp_path):
     src = write_csv(tmp_path / "clienti.csv", CSV_IT, "cp1252")
     r = pseudonymize(src, tmp_path / "out", CSV_PLAN)
     out = r.output.read_bytes()
-    for secret in ("Mario", "Rossi", "Bianchi", "Lucia", "Torino", "01/02/1980", "1.234,56"):
-        assert secret.encode("cp1252") not in out
+    assert_cells_changed(csv_rows(src.read_bytes()), csv_rows(out), columns=range(5))
     back = restore(r.output, r.mapping, tmp_path / "back.csv")
     assert (tmp_path / "back.csv").read_bytes() == src.read_bytes()
     assert back.identical_to_original is True and not back.unknown
@@ -100,8 +99,12 @@ def test_json_roundtrip_restores_the_original_bytes(tmp_path):
     assert c0["anagrafica"]["nome"] != "Mario Rossi" and is_valid_fiscal_code(c0["anagrafica"]["cf"])
     assert c1["anagrafica"]["cf"] == "" and c0["x"] is None and c0["ok"] is True
     assert isinstance(c0["importo"], float) and c0["tel"].startswith("+39 3")
-    for secret in ("Mario", "Rossi", "Bianchi", "1980-02-01", "1234.50", "1234567", "RSSMRA"):
-        assert secret not in r.output.read_text()
+    original = json.loads(JSON_RAW)["clienti"]
+    for orig, new in zip(original, out["clienti"], strict=True):
+        for key in ("nome", "citta", "cf"):
+            assert not orig["anagrafica"][key] or new["anagrafica"][key] != orig["anagrafica"][key]
+        for key in ("importo", "nascita", "tel"):
+            assert new[key] != orig[key]
     back = restore(r.output, r.mapping, tmp_path / "back.json")
     assert (tmp_path / "back.json").read_bytes() == src.read_bytes()  # incl. 1234.50 and \u00ec
     assert back.identical_to_original is True
@@ -132,9 +135,9 @@ def test_excel_roundtrip_restores_values_and_types(tmp_path):
     r = pseudonymize(src, tmp_path / "out", plan)
     c = openpyxl.load_workbook(r.output)["Clienti"]
     o = openpyxl.load_workbook(r.output)["Ordini"]
-    assert (
-        c["A2"].value != "Mario" and isinstance(c["C2"].value, float) and isinstance(c["D2"].value, datetime)
-    )
+    assert c["A2"].value != "Mario"
+    assert isinstance(c["C2"].value, (int, float))  # xlsx stores 1779.0 as 1779: a number either way
+    assert isinstance(c["D2"].value, datetime)
     assert c["D2"].number_format == "DD/MM/YYYY" and c["E2"].value == "=C2*0.22"
     assert o["B2"].value == c["A2"].value  # "Mario" is the same fake in every sheet
     back = restore(r.output, r.mapping, tmp_path / "back.xlsx")
